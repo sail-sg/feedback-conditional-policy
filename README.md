@@ -1,6 +1,6 @@
 # FCP (Feedback Conditional Policy)
 
-A training framework that implements **Feedback Conditional Policy (FCP)** for aligning large language models with multi-dimensional feedback.
+A training framework that implements **Feedback Conditional Policy (FCP)** for aligning large language models with verbal feedback.
 
 ## 🚀 Quick Start
 
@@ -43,21 +43,4 @@ We release the training datasets on 🤗 Hugging Face Datasets:
 
 ## 📖 Citation
 
-If you use this repository or datasets in your research, please cite:
-
-```bibtex
-@misc{fcp2024,
-  title={Feedback Conditional Policy for Large Language Model Alignment},
-  author={[Author Names]},
-  year={2024},
-  note={Code and datasets available at: https://github.com/[repository-url]}
-}
-```
-
-## 📄 License
-
-[License information to be added]
-
-## 🤝 Contributing
-
-[Contributing guidelines to be added]
+TBD
