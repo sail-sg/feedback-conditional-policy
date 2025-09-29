@@ -1,5 +1,7 @@
 # FCP (Feedback Conditional Policy)
 
+This is the official repository for the paper [Language Models Can Learn from Verbal Feedback Without Scalar Rewards](https://arxiv.org/pdf/2509.22638).
+
 A training framework that implements **Feedback Conditional Policy (FCP)** for aligning large language models with verbal feedback.
 
 ## 🚀 Quick Start
@@ -41,4 +43,12 @@ We use different frameworks and datasets for different training stages:
 
 ## 📖 Citation
 
-TBD
+If you find this code useful, please consider citing our paper:
+```bib
+@article{luo2025languagemodelslearnverbal,
+      title={Language Models Can Learn from Verbal Feedback Without Scalar Rewards}, 
+      author={Renjie Luo and Zichen Liu and Xiangyan Liu and Chao Du and Min Lin and Wenhu Chen and Wei Lu and Tianyu Pang},
+      journal={arXiv preprint arXiv:2509.22638},
+      year={2025}
+}
+```
