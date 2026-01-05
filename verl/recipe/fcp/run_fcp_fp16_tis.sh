@@ -10,7 +10,7 @@ set -xeuo pipefail
 # ================================
 # Project Configuration
 # ================================
-project_name='FP16_Experiment'
+project_name='FCP_Experiment'
 # exp_name='FCP-v1-GPT5nano-critique-chat_250k_x4_pro_critique_v0'
 exp_name='test'
 
