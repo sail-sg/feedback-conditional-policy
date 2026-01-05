@@ -292,8 +292,25 @@ class TaskRunner:
         reward_fn = load_reward_manager(
             config, tokenizer, num_examine=0, **config.reward_model.get("reward_kwargs", {})
         )
+        # val_reward_fn = load_reward_manager(
+        #     config, tokenizer, num_examine=1, **config.reward_model.get("reward_kwargs", {})
+        # )
+        val_config = OmegaConf.create({
+            'reward_model': {
+                'reward_manager': "naive",
+                'reward_kwargs': {},
+                'sandbox_fusion': config.reward_model.get('sandbox_fusion', None)
+            },
+            'data': {
+                'reward_fn_key': config.data.reward_fn_key
+            }
+        })
+        val_reward_kwargs = {}
         val_reward_fn = load_reward_manager(
-            config, tokenizer, num_examine=1, **config.reward_model.get("reward_kwargs", {})
+            val_config,
+            tokenizer,
+            num_examine=1,
+            **val_reward_kwargs
         )
 
         resource_pool_manager = self.init_resource_pool_mgr(config)

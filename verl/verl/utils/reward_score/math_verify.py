@@ -27,6 +27,10 @@ def compute_score(model_output: str, ground_truth: str, timeout_score: float = 0
     )
     ret_score = 0.0
 
+    model_output = model_output[-300:]
+    if type(ground_truth) != str:
+        ground_truth = str(ground_truth)
+
     # Wrap the ground truth in \boxed{} format for verification
     ground_truth_boxed = "\\boxed{" + ground_truth + "}"
     try:

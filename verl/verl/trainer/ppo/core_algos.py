@@ -105,6 +105,7 @@ class AdvantageEstimator(str, Enum):
     GPG = "gpg"
     RLOO_VECTORIZED = "rloo_vectorized"
     GRPO_VECTORIZED = "grpo_vectorized"
+    FCP = "fcp"
 
 
 ADV_ESTIMATOR_REGISTRY: dict[str, Any] = {}
@@ -259,6 +260,32 @@ def compute_gae_advantage_return(
         advantages = verl_F.masked_whiten(advantages, response_mask)
     return advantages, returns
 
+@register_adv_est(AdvantageEstimator.FCP)  # or simply: @register_adv_est("fcp")
+def compute_fcp_outcome_advantage(token_level_rewards: torch.Tensor,
+                                   response_mask: torch.Tensor,
+                                   config: Optional[AlgoConfig] = None,
+                                   index: Optional[np.ndarray] = None,
+                                   reward_baselines: Optional[torch.Tensor] = None):
+    """
+    Compute advantage for FCP
+    Args:
+        token_level_rewards: `(torch.Tensor)`
+            shape: (bs, response_length)
+        response_mask: `(torch.Tensor)`
+            shape: (bs, response_length)
+    
+    Returns:
+        advantages: `(torch.Tensor)`
+            shape: (bs, response_length)
+        Returns: `(torch.Tensor)`
+            shape: (bs, response_length)
+    """
+    scores = token_level_rewards.sum(dim=-1)
+
+    with torch.no_grad():
+        scores = scores.unsqueeze(-1) * response_mask
+
+    return scores, scores
 
 # NOTE(sgm): this implementation only consider outcome supervision, where the reward is a scalar.
 @register_adv_est(AdvantageEstimator.GRPO)  # or simply: @register_adv_est("grpo")
@@ -1048,6 +1075,29 @@ def compute_policy_loss_gspo(
         "actor/pg_clipfrac_lower": pg_clipfrac_lower.detach().item(),
     }
     return pg_loss, pg_metrics
+
+
+@register_policy_loss("nll")
+def compute_policy_loss_nll(
+    old_log_prob: torch.Tensor,   # unused, for API parity
+    log_prob: torch.Tensor,       # log p_theta(y_t | ·), shape (B, T)
+    advantages: torch.Tensor,     # unused, for API parity
+    response_mask: torch.Tensor,  # (B, T) in {0,1}
+    loss_agg_mode: str = "token-mean",
+    config: Optional[DictConfig | AlgoConfig] = None,
+    rollout_is_weights: torch.Tensor | None = None,
+):
+    # _ = (old_log_prob, advantages, config)
+
+    nll = -log_prob  # (B, T)
+
+    # Apply rollout importance sampling weights if provided
+    if rollout_is_weights is not None:
+        nll = nll * rollout_is_weights
+
+    nll_loss = agg_loss(loss_mat=nll, loss_mask=response_mask, loss_agg_mode=loss_agg_mode)
+
+    return nll_loss, {}
 
 
 @register_policy_loss("gpg")

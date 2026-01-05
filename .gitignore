@@ -1,0 +1,13 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+verl.egg-info/
+
+# FCP Project Specific
+# Cache directories
+verl_cache/
+**/cache/
+*.cache
+
+# Checkpoint directories
+checkpoints/
+ckpts/

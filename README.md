@@ -1,8 +1,20 @@
+<div align="center">
+
 # FCP (Feedback Conditional Policy)
+
+[![arXiv](https://img.shields.io/badge/arXiv-2509.22638-b31b1b.svg)](https://arxiv.org/abs/2509.22638)
+[![Hugging Face Collection](https://img.shields.io/badge/🤗%20Hugging%20Face-Collection-yellow)](https://huggingface.co/collections/Renjie-Ranger/feedback-conditional-policy)
+
+</div>
 
 This is the official repository for the paper [Language Models Can Learn from Verbal Feedback Without Scalar Rewards](https://arxiv.org/pdf/2509.22638).
 
 A training framework that implements **Feedback Conditional Policy (FCP)** for aligning large language models with verbal feedback.
+
+## 📝 Updates
+
+- **2026-01-05**: Simplified the codebase, provided modification documentation ([MODIFICATIONS_FCP.md](./verl/MODIFICATIONS_FCP.md)), and released model checkpoints on [Hugging Face](https://huggingface.co/collections/Renjie-Ranger/feedback-conditional-policy).
+- **2025-09-25**: Open-sourced this repository.
 
 ## 🚀 Quick Start
 

@@ -1,0 +1,140 @@
+# FCP (Feedback-Conditional Policy) Training Configuration
+# Note: Please update the hydra searchpath to your actual project path
+hydra:
+  searchpath:
+    - file:///${oc.env:WORKING_DIR,/path/to/your/project}/verl/verl/trainer/config
+
+defaults:
+  - ppo_trainer
+  - _self_
+
+# Data configuration
+data:
+  train_batch_size: 8  # Smaller batch size due to GPT API calls
+  train_files: ~/data/your_dataset/train.parquet  # TODO: Update to your training data path
+  val_files: ~/data/your_dataset/val.parquet  # TODO: Update to your validation data path
+  prompt_key: prompt
+  response_key: model_response
+  max_prompt_length: 512
+  max_response_length: 4096
+  truncation: left
+  prompt_dict_keys: null
+  response_dict_keys: null
+  cache_dir: ./verl_cache  # TODO: Update to your preferred cache directory
+  gen_batch_size: 8
+  reward_fn_key: data_source
+  sampler:
+    class_path: null
+    class_name: null
+  shuffle: true
+  filter_overlong_prompts_workers: 48
+  dataloader_num_workers: 32
+  val_batch_size: 512
+
+# Model configuration
+actor_rollout_ref:
+  model:
+    path: ~/models/your_model  # TODO: Update to your base model path
+    trust_remote_code: false
+    enable_gradient_checkpointing: true
+  actor:
+    strategy: fsdp  # or fsdp2, megatron
+    optim:
+      lr: 1e-6
+      weight_decay: 0.0
+    loss_agg_mode: token-mean
+    ppo_mini_batch_size: 256
+    ppo_micro_batch_size_per_gpu: 2
+    policy_loss:
+      loss_mode: sft
+  rollout:
+    name: "vllm"  # Use vLLM for efficient inference (options: hf, vllm, sglang)
+    n: 4  # Number of rollouts per prompt (n parameter in your algorithm)
+    temperature: 1.0
+    top_p: 1.0
+    top_k: -1
+    do_sample: true
+    log_prob_micro_batch_size_per_gpu: 40
+    dtype: bfloat16
+
+# FCP Algorithm specific configuration
+algorithm:
+  name: fcp
+  critique_type: "pro" # "user" or "pro"
+  adv_estimator: fcp
+  n_rollouts: 4  # Number of rollouts per prompt
+  sft_loss_weight: 1.0  # Weight for SFT loss
+  use_kl_in_reward: false  # Don't use KL penalty in FCP
+  debug_mode: false  # Enable debug mode for detailed logging
+  # Special tokens for critique formatting (should match tokenizer vocabulary)
+  critique_start_token: "<EF>"
+  critique_end_token: "</EF>"
+
+    # Rollout Importance Sampling: corrects distribution mismatch between rollout and training policies
+  # Main control: Upper threshold for IS weights (null = disabled, float = enabled)
+  # When enabled, computes IS weights and mismatch metrics (KL, PPL, etc.)
+  rollout_is_threshold: null
+
+  # Lower threshold for IS weights (null = auto-reciprocal of upper)
+  rollout_is_threshold_lower: null
+
+  # Aggregation level: "token" (biased), "sequence" (unbiased), "geometric" (experimental)
+  rollout_is_level: token
+
+  # Bounding mode: "truncate" (cap upper only), "clip" (zero outside bounds)
+  rollout_is_mode: truncate
+
+  # Per-token veto threshold for catastrophic outliers
+  rollout_is_veto_threshold: 1e-4
+
+  # Whether to apply IS weights to policy loss
+  # true = apply weights to loss, false = compute metrics only (no weight application)
+  # Useful for monitoring mismatch before enabling correction
+  rollout_is: false
+
+
+# GPT API configuration for critique generation
+gpt_api:
+  api_key: "your-openai-api-key"  # Set your OpenAI API key (will be read from OPENAI_API_KEY env var)
+  model_name: "gpt-5-nano"  # Default model following reference implementation
+  max_workers: 64  # Number of concurrent API calls (following reference implementation)
+  timeout: 30  # Timeout for each API call in seconds
+  max_retries: 3  # Maximum retries for failed calls
+
+# Reward model configuration
+reward_model:
+  enable: false  # We use GPT API instead of a separate reward model
+  reward_manager: gpt_critique_math_score  # Use GPT critique reward manager
+  reward_kwargs:
+    # api_key will be read from OPENAI_API_KEY environment variable
+    model_name: ${gpt_api.model_name}
+    max_workers: ${gpt_api.max_workers}
+    timeout: ${gpt_api.timeout}
+    max_retries: ${gpt_api.max_retries}
+    reference_answer_key: "reference_answer"
+    cache_dir: "./verl_cache"  # TODO: Update to your preferred cache directory
+    cache_filename: "gpt_critique_result_cache.jsonl"
+
+# Validation reward model configuration (can be different from training)
+val_reward_model:
+  reward_manager: naive  # Use naive reward manager for validation
+  reward_kwargs: {}  # Empty kwargs for naive reward manager
+
+critic:
+  enable: false
+  ppo_micro_batch_size_per_gpu: 2
+
+# Trainer configuration
+trainer:
+  project_name: fcp_experiment
+  experiment_name: fcp_v1
+  default_local_dir: ./checkpoints/fcp
+  total_epochs: 1
+  total_training_steps: null  # Will be computed automatically
+  test_freq: 5  # Validation frequency (-1 to disable validation)
+  save_freq: 10  # Checkpoint save frequency
+  val_before_train: True
+  critic_warmup: 0  # No critic warmup needed for FCP
+  logger: ['console','wandb']  # or wandb
+  nnodes: 1
+  n_gpus_per_node: 8
